@@ -15,6 +15,7 @@
  */
 package com.jagrosh.jlyrics;
 
+import com.jagrosh.jmusicbot.JMusicBot;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
@@ -34,6 +35,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Document.OutputSettings;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.safety.Safelist;
 
 /**
@@ -42,7 +44,7 @@ import org.jsoup.safety.Safelist;
  */
 public class LyricsClient
 {
-    private final Config config = ConfigFactory.load();
+    private final Config config = ConfigFactory.load("lyrics.conf");
     private final HashMap<String, Lyrics> cache = new HashMap<>();
     private final OutputSettings noPrettyPrint = new OutputSettings().prettyPrint(false);
     private final Safelist newlineSafelist = Safelist.none().addTags("br", "p");
@@ -165,9 +167,22 @@ public class LyricsClient
                         if(url==null || url.isEmpty())
                             return null;
                         doc = Jsoup.connect(url).userAgent(userAgent).timeout(timeout).get();
+                        Element element = doc.selectFirst(contentSelector);
+                        StringBuilder convertedElement = new StringBuilder();
+                        if (element != null) {
+                            for (Node node : element.childNodes()) {
+                                if (node instanceof Element) {
+                                    convertedElement.append(((Element) node).text());
+                                } else if (node instanceof org.jsoup.nodes.TextNode) {
+                                    convertedElement.append(((org.jsoup.nodes.TextNode) node).getWholeText());
+                                }
+                            }
+                        } else {
+                            return null;
+                        }
                         Lyrics lyrics = new Lyrics(doc.selectFirst(titleSelector).ownText(),
                                 doc.selectFirst(authorSelector).ownText(),
-                                cleanWithNewlines(doc.selectFirst(contentSelector)),
+                                convertedElement.toString(),
                                 url,
                                 source);
                         cache.put(cacheKey, lyrics);
