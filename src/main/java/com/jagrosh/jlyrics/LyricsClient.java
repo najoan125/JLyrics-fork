@@ -44,7 +44,7 @@ import org.jsoup.safety.Safelist;
  */
 public class LyricsClient
 {
-    private final Config config = ConfigFactory.load("lyrics.conf");
+    private final Config config = ConfigFactory.load();
     private final HashMap<String, Lyrics> cache = new HashMap<>();
     private final OutputSettings noPrettyPrint = new OutputSettings().prettyPrint(false);
     private final Safelist newlineSafelist = Safelist.none().addTags("br", "p");
